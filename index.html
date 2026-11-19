@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1a1530">
+<title>EMO 值测试 · 测测你的emo浓度</title>
+<style>
+  :root{
+    --bg1:#1a1530;
+    --bg2:#2b1f4a;
+    --accent:#a06bff;
+    --accent2:#ff6ba8;
+    --card:rgba(255,255,255,.06);
+    --text:#f4f0ff;
+    --muted:#b9aed6;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    background:linear-gradient(160deg,var(--bg1),var(--bg2));
+    color:var(--text);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    overflow-x:hidden;
+    position:relative;
+  }
+  /* 背景漂浮光斑 */
+  .orb{position:fixed;border-radius:50%;filter:blur(60px);opacity:.35;pointer-events:none;z-index:0}
+  .orb.a{width:260px;height:260px;background:#7a3cff;top:-60px;left:-60px;animation:float 9s ease-in-out infinite}
+  .orb.b{width:220px;height:220px;background:#ff4d94;bottom:-40px;right:-50px;animation:float 11s ease-in-out infinite reverse}
+  @keyframes float{0%,100%{transform:translate(0,0)}50%{transform:translate(25px,-30px)}}
+
+  .app{width:100%;max-width:480px;position:relative;z-index:1;padding:24px 20px 40px;display:flex;flex-direction:column;min-height:100vh}
+
+  /* 通用卡片 */
+  .screen{display:none;flex-direction:column;flex:1;animation:fade .45s ease}
+  .screen.active{display:flex}
+  @keyframes fade{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+  /* 首页 */
+  .hero{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:20px 0}
+  .hero .moon{font-size:88px;line-height:1;filter:drop-shadow(0 8px 24px rgba(160,107,255,.6));animation:float 6s ease-in-out infinite}
+  .hero h1{font-size:38px;margin:22px 0 8px;letter-spacing:2px;background:linear-gradient(90deg,#fff,var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero .sub{font-size:15px;color:var(--muted);line-height:1.8;max-width:300px}
+  .hero .count{display:inline-flex;align-items:center;gap:6px;margin-top:26px;font-size:13px;color:#d9c9ff;background:var(--card);border:1px solid rgba(255,255,255,.1);padding:8px 16px;border-radius:20px}
+  .btn{
+    display:block;width:100%;border:none;border-radius:16px;padding:17px;font-size:17px;font-weight:700;color:#fff;cursor:pointer;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    box-shadow:0 10px 30px rgba(160,107,255,.4);
+    transition:transform .15s ease,box-shadow .15s ease;font-family:inherit;
+  }
+  .btn:active{transform:scale(.97);box-shadow:0 5px 16px rgba(160,107,255,.4)}
+  .btn.ghost{background:var(--card);border:1px solid rgba(255,255,255,.15);box-shadow:none;color:var(--muted);font-weight:500;padding:14px}
+  .disclaimer{text-align:center;font-size:11px;color:#8a7fae;margin-top:18px;line-height:1.6}
+
+  /* 答题页 */
+  .qhead{margin-bottom:18px}
+  .qprogress-top{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:10px}
+  .qprogress-top b{color:var(--text);font-size:15px}
+  .bar{height:6px;background:rgba(255,255,255,.1);border-radius:6px;overflow:hidden}
+  .bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:6px;transition:width .35s ease}
+  .qnum{font-size:13px;color:var(--accent);font-weight:700;margin:30px 0 10px;letter-spacing:1px}
+  .qtitle{font-size:22px;line-height:1.5;font-weight:600;margin-bottom:26px;min-height:66px}
+  .options{display:flex;flex-direction:column;gap:12px}
+  .opt{
+    text-align:left;width:100%;border:1px solid rgba(255,255,255,.12);background:var(--card);color:var(--text);
+    border-radius:14px;padding:16px 18px;font-size:15px;line-height:1.5;cursor:pointer;font-family:inherit;
+    display:flex;align-items:center;gap:14px;transition:all .2s ease;
+  }
+  .opt .dot{width:22px;height:22px;flex:0 0 22px;border-radius:50%;border:2px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .2s}
+  .opt.selected{background:linear-gradient(135deg,rgba(160,107,255,.35),rgba(255,107,168,.25));border-color:var(--accent);transform:translateX(4px)}
+  .opt.selected .dot{background:var(--accent);border-color:var(--accent)}
+  .qfooter{margin-top:auto;padding-top:28px;display:flex;gap:12px}
+  .qfooter .btn{flex:1}
+  .qfooter .btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+  /* 结果页 */
+  .result{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:10px 0}
+  .result .bigemoji{font-size:96px;line-height:1;filter:drop-shadow(0 8px 26px rgba(160,107,255,.6));animation:pop .6s cubic-bezier(.2,1.4,.4,1)}
+  @keyframes pop{from{transform:scale(0) rotate(-20deg)}to{transform:scale(1) rotate(0)}}
+  .result .level{font-size:15px;color:var(--accent2);font-weight:700;letter-spacing:3px;margin-top:20px}
+  .result h2{font-size:32px;margin:8px 0 14px}
+  .result .desc{font-size:15px;color:var(--muted);line-height:1.8;max-width:320px}
+  .meter{width:100%;max-width:320px;margin-top:30px;text-align:left}
+  .meter .label{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:8px}
+  .meter .label b{font-size:20px;color:#fff}
+  .meter .track{height:14px;background:rgba(255,255,255,.1);border-radius:10px;overflow:hidden}
+  .meter .track>i{display:block;height:100%;width:0;border-radius:10px;background:linear-gradient(90deg,#5be0c0,var(--accent),var(--accent2));transition:width 1.2s cubic-bezier(.2,.8,.2,1)}
+  .quote{margin-top:26px;font-size:13px;color:#cbbfe8;font-style:italic;max-width:300px;line-height:1.7}
+  .actions{width:100%;margin-top:auto;padding-top:30px;display:flex;flex-direction:column;gap:12px}
+
+  .fade-enter{animation:fade .4s ease}
+</style>
+</head>
+<body>
+<div class="orb a"></div>
+<div class="orb b"></div>
+
+<div class="app">
+
+  <!-- 首页 -->
+  <section class="screen active" id="home">
+    <div class="hero">
+      <div class="moon">🌙</div>
+      <h1>EMO 浓度计</h1>
+      <p class="sub">15道题，测测你此刻的 emo 指数<br>是深夜网抑云，还是阳光小太阳？</p>
+      <div class="count">📝 共 15 题 · 约 1 分钟</div>
+    </div>
+    <div>
+      <button class="btn" onclick="startTest()">开始测试 →</button>
+      <p class="disclaimer">本测试仅供娱乐，结果不构成任何心理诊断<br>心情不好时，记得找朋友聊聊 ☺</p>
+    </div>
+  </section>
+
+  <!-- 答题页 -->
+  <section class="screen" id="quiz">
+    <div class="qhead">
+      <div class="qprogress-top"><span>答题进度</span><span><b id="qIndex">1</b> / 15</span></div>
+      <div class="bar"><i id="qBar"></i></div>
+    </div>
+    <div class="qnum" id="qNum">QUESTION 01</div>
+    <div class="qtitle" id="qTitle"></div>
+    <div class="options" id="qOptions"></div>
+    <div class="qfooter">
+      <button class="btn ghost" id="prevBtn" onclick="prevQ()" style="display:none">上一题</button>
+      <button class="btn" id="nextBtn" onclick="nextQ()" disabled>下一题</button>
+    </div>
+  </section>
+
+  <!-- 结果页 -->
+  <section class="screen" id="result">
+    <div class="result">
+      <div class="bigemoji" id="rEmoji">🌙</div>
+      <div class="level" id="rLevel">EMO 等级</div>
+      <h2 id="rTitle">标题</h2>
+      <p class="desc" id="rDesc">描述</p>
+      <div class="meter">
+        <div class="label"><span>你的 EMO 浓度</span><b><span id="rScore">0</span>%</b></div>
+        <div class="track"><i id="rMeter"></i></div>
+      </div>
+      <p class="quote" id="rQuote">“一句话”</p>
+    </div>
+    <div class="actions">
+      <button class="btn" onclick="startTest()">再测一次 🔄</button>
+      <button class="btn ghost" onclick="goHome()">返回首页</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+// 题库：每题4个选项，分值 0~3（越 emo 分越高）
+const QUESTIONS = [
+  { q:"现在是凌晨1点，你还醒着，通常在……",
+    a:[["刷手机根本停不下来",3],["听着歌发呆放空",2],["早就睡着了",0],["还在熬夜赶事情",1]] },
+  { q:"循环播放列表里，出现最多的是？",
+    a:[["伤感emo神曲单曲循环",3],["偶尔来一首慢歌",1],["快乐歌单永动机",0],["啥都能听，看心情",1]] },
+  { q:"最近发朋友圈/动态的频率？",
+    a:[["好久没发了，懒得发",3],["仅自己可见的小作文",2],["偶尔分享一下生活",1],["天天更新停不下来",0]] },
+  { q:"躺床上准备睡觉时，脑子里常在想？",
+    a:[["翻来覆去想烦心事",3],["复盘今天说错的话",2],["放空什么也不想",0],["规划明天吃啥",1]] },
+  { q:"周末突然取消了所有安排，你的第一反应？",
+    a:[["正好，就想一个人待着",3],["松了口气，也挺好",2],["有点无聊，想找人",1],["太好了，约朋友出去",0]] },
+  { q:"遇到一件糟心事，你更可能？",
+    a:[["自己憋着，慢慢消化",3],["找人吐槽但说不清哪里难受",2],["哭一场就过去了",1],["很快调整，继续向前",0]] },
+  { q:"听到一首很戳的老歌，你会？",
+    a:[["瞬间被拉回某段记忆",3],["有点怅然若失",2],["跟着哼唱很开心",0],["没太大感觉",1]] },
+  { q:"外面下起大雨，你的心情通常？",
+    a:[["莫名就低落下来",3],["有点安静、适合发呆",2],["毫无波动",1],["反而觉得清爽舒服",0]] },
+  { q:"早上闹钟响起，你内心的声音是？",
+    a:[["为什么世界要让我起床",3],["再躺五分钟……",2],["还行，新的一天",1],["满血复活，冲！",0]] },
+  { q:"消息很多、社交密集后，你会？",
+    a:[["电量耗尽，需要独处回血",3],["有点疲惫，想缓缓",2],["还行，能应付",1],["越聊越有精神",0]] },
+  { q:"翻看以前的聊天记录/照片时？",
+    a:[["常常看着看着就沉默了",3],["有点感慨物是人非",2],["偶尔笑笑就划走",1],["很少回头看",0]] },
+  { q:"觉得自己最近的精神状态更像？",
+    a:[["一整个慢慢沉下去",3],["时好时坏不太稳定",2],["基本平稳",1],["元气满满",0]] },
+  { q:"深夜刷到别人过得很好的内容，你会？",
+    a:[["对比之下有点失落",3],["羡慕但也为自己惆怅",2],["没感觉，划过去",1],["替对方开心",0]] },
+  { q:"如果给现在的自己发一句话，会是？",
+    a:[["「会不会好起来啊……」",3],["「再撑一撑吧」",2],["「今天也不错」",1],["「你超棒的！」",0]] },
+  { q:"说到未来，你的第一感觉是？",
+    a:[["一片迷茫，不敢想",3],["有点期待又有点慌",2],["顺其自然吧",1],["充满期待，闪闪发光",0]] }
+];
+
+const LEVELS = [
+  { max:9,  emoji:"☀️", level:"EMO 等级 LV.1", title:"阳光小太阳", desc:"你的 emo 浓度极低，浑身充满正能量！坏情绪很难在你身上停留太久，继续保持这份闪闪发光吧～", quote:"“你的快乐，是会传染的。”" },
+  { max:18, emoji:"😌", level:"EMO 等级 LV.2", title:"淡定正常人", desc:"你偶尔也会有点小情绪，但总体稳稳的。能扛事、能自愈，是让人安心的存在。", quote:"“淡淡的，也挺好。”" },
+  { max:27, emoji:"🌧️", level:"EMO 等级 LV.3", title:"轻度 emo 选手", desc:"你的心里住着一片小乌云，夜深人静时容易冒出来。别担心，允许自己偶尔脆弱也是一种勇敢。", quote:"“雨会停的，天会亮的。”" },
+  { max:36, emoji:"🌚", level:"EMO 等级 LV.4", title:"重度 emo 患者", desc:"深夜网抑云常驻选手，情绪像坐过山车。记得：你不是一个人，找信任的人聊聊，或听听歌放松一下。", quote:"“再长的夜，也会有尽头。”" },
+  { max:45, emoji:"🖤", level:"EMO 等级 LV.5", title:"EMO 之王", desc:"你的 emo 浓度已经拉满，是行走的深夜文案生成器。但请一定照顾好自己，必要时向专业帮助伸出手。", quote:"“黑暗里，也请记得呼吸。”" }
+];
+
+let cur = 0;           // 当前题目索引
+let answers = new Array(QUESTIONS.length).fill(null); // 每题选的分值
+
+const $ = id => document.getElementById(id);
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function startTest(){
+  cur = 0;
+  answers.fill(null);
+  show('quiz');
+  render();
+}
+
+function goHome(){ show('home'); }
+
+function render(){
+  const item = QUESTIONS[cur];
+  $('qIndex').textContent = cur + 1;
+  $('qBar').style.width = ((cur)/QUESTIONS.length*100) + '%';
+  $('qNum').textContent = 'QUESTION ' + String(cur+1).padStart(2,'0');
+  $('qTitle').textContent = item.q;
+  const box = $('qOptions');
+  box.innerHTML = '';
+  const letters = ['A','B','C','D'];
+  item.a.forEach((opt,i)=>{
+    const btn = document.createElement('button');
+    btn.className = 'opt' + (answers[cur] === opt[1] ? ' selected' : '');
+    btn.innerHTML = '<span class="dot">' + (answers[cur] === opt[1] ? '✓' : '') + '</span><span>' + opt[0] + '</span>';
+    btn.onclick = ()=>choose(opt[1], btn);
+    box.appendChild(btn);
+  });
+  $('prevBtn').style.display = cur === 0 ? 'none' : 'block';
+  $('nextBtn').textContent = cur === QUESTIONS.length - 1 ? '查看结果 🎯' : '下一题';
+  $('nextBtn').disabled = answers[cur] === null;
+  // 入场动画
+  $('quiz').classList.remove('fade-enter'); void $('quiz').offsetWidth; $('quiz').classList.add('fade-enter');
+}
+
+function choose(score, btn){
+  answers[cur] = score;
+  document.querySelectorAll('.opt').forEach(o=>{
+    o.classList.remove('selected');
+    o.querySelector('.dot').textContent = '';
+  });
+  btn.classList.add('selected');
+  btn.querySelector('.dot').textContent = '✓';
+  $('nextBtn').disabled = false;
+}
+
+function nextQ(){
+  if(answers[cur] === null) return;
+  if(cur < QUESTIONS.length - 1){ cur++; render(); }
+  else { showResult(); }
+}
+
+function prevQ(){
+  if(cur > 0){ cur--; render(); }
+}
+
+function showResult(){
+  const total = answers.reduce((a,b)=>a+(b||0),0);
+  const percent = Math.round(total / (QUESTIONS.length*3) * 100);
+  const lvl = LEVELS.find(l=>total <= l.max) || LEVELS[LEVELS.length-1];
+  $('rEmoji').textContent = lvl.emoji;
+  $('rLevel').textContent = lvl.level;
+  $('rTitle').textContent = lvl.title;
+  $('rDesc').textContent = lvl.desc;
+  $('rQuote').textContent = lvl.quote;
+  $('rScore').textContent = percent;
+  show('result');
+  $('rMeter').style.width = '0%';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{ $('rMeter').style.width = percent + '%'; }));
+}
+
+// 键盘支持（方便调试/桌面端）
+document.addEventListener('keydown',e=>{
+  if(!$('quiz').classList.contains('active')) return;
+  const n = parseInt(e.key);
+  if(n>=1 && n<=4){ const btns=document.querySelectorAll('.opt'); if(btns[n-1]) btns[n-1].click(); }
+  if(e.key==='ArrowRight') nextQ();
+  if(e.key==='ArrowLeft') prevQ();
+});
+</script>
+</body>
+</html>
